@@ -231,6 +231,9 @@ importers:
       '@playwright/test':
         specifier: ^1.50.1
         version: 1.51.0
+      '@stately-cloud/cli':
+        specifier: ^0.94.0
+        version: 0.94.0
       '@tailwindcss/postcss':
         specifier: ^4.1.13
         version: 4.1.13
@@ -2093,6 +2096,11 @@ packages:
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
+
+  '@stately-cloud/cli@0.94.0':
+    resolution: {integrity: sha512-5LLpUYmlJwg1IiAro1EZOYee8VM2xzrlYJT4pzLqy6aWTJx+qoQnThqlDMDMG+YCeQbHzSddLPyvcu3mZyUKgw==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   '@stately-cloud/client@0.36.0':
     resolution: {integrity: sha512-7qZ9UyYc/Z1HdXasWSupljFCJK0nJDZJL0eiuLWDAj2hxuY8L8LiGWnq9LVTQYOyO3Kf7I2HYfxG1vEuXcyITg==}
@@ -5902,6 +5910,8 @@ snapshots:
   '@shikijs/vscode-textmate@10.0.2': {}
 
   '@standard-schema/spec@1.0.0': {}
+
+  '@stately-cloud/cli@0.94.0': {}
 
   '@stately-cloud/client@0.36.0':
     dependencies:

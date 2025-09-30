@@ -48,11 +48,39 @@ With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to 
 
 ## Deploy Your Own
 
-You can deploy your own version of the Next.js AI Chatbot to Vercel with one click:
+You can deploy your own version of the Next.js + StatelyDB AI Chatbot to Vercel with a few clicks:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/templates/next.js/nextjs-ai-chatbot)
+First bootstrap with StatelyDB and then Deploy onto Vercel.
+
+[![Build with Stately](https://gist.githubusercontent.com/ryan-stately/51a07a4b3123f5cb89c8b9a1f3edf214/raw/158cb441aa65d05dd1a75b85dffad2feeb473f6b/build-icon.svg)](https://console.stately.cloud/new?repo=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot)&nbsp;&nbsp;&nbsp;&nbsp;[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=ai-chatbot&s=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot&env=STATELY_STORE_ID,STATELY_ACCESS_KEY,ANTHROPIC_API_KEY&envDescription=API%20keys%20and%20Store%20configuration.&envLink=https%3A%2F%2Fdocs.stately.cloud%2Fguides%2Fconnect%2F&skippable-integrations=1)
 
 ## Running locally
+
+**Clone This Template (or your own if deploying on Vercel)**
+
+```bash setup Clone the Repo
+git clone https://github.com/StatelyCloud/ai-chatbot
+cd ai-chatbot
+```
+
+**Install Dependencies & Login**
+
+```bash setup Install Dependencies & Login
+pnpm install
+pnpm run login
+```
+
+**Generate the SDK**
+
+```bash setup Generate the SDK
+pnpm run generate -- --language typescript --schema-id $SCHEMA_ID ./generated
+```
+
+**Start the Application**
+
+```bash setup Run the Application
+pnpm dev
+```
 
 You will need to use the environment variables [defined in `.env.example`](.env.example) to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
 
@@ -63,7 +91,6 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 3. Download your environment variables: `vercel env pull`
 
 ```bash
-pnpm install
 pnpm dev
 ```
 
