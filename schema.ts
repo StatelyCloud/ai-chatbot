@@ -1,51 +1,22 @@
 import {
+  arrayOf,
+  bool,
+  bytes,
+  enumType,
   itemType,
   objectType,
-  enumType,
   string,
   timestampSeconds,
-  bool,
   uint,
-  arrayOf,
-  bytes,
-  type,
 } from "@stately-cloud/schema";
 
-// ============================================
-// Types
-// ============================================
-
-const chatId = type("chatId", uint);
-const messageId = type("messageId", uint);
-const documentId = type("documentId", uint);
-const suggestionId = type("suggestionId", uint);
-const streamId = type("streamId", uint);
-const userId = type("userId", uint);
-
-// ============================================
-// Enums
-// ============================================
-
-/**
- * Visibility levels for chat conversations
- */
+/** Visibility levels for chat conversations */
 const Visibility = enumType("Visibility", {
   PRIVATE: 0,
   PUBLIC: 1,
 });
 
-/**
- * Message roles for chat participants
- */
-const MessageRole = enumType("MessageRole", {
-  USER: 1,
-  ASSISTANT: 2,
-  SYSTEM: 3,
-});
-
-/**
- * Document types
- */
+/** Document types */
 const DocumentKind = enumType("DocumentKind", {
   TEXT: 0,
   CODE: 1,
@@ -53,22 +24,32 @@ const DocumentKind = enumType("DocumentKind", {
   SHEET: 3,
 });
 
-/**
- * Resolution status for suggestions
- */
+/** Message roles for chat participants */
+const MessageRole = enumType("MessageRole", {
+  UNSPECIFIED: 0,
+  USER: 1,
+  ASSISTANT: 2,
+  SYSTEM: 3,
+});
+
+/** Resolution status for suggestions */
 const ResolutionStatus = enumType("ResolutionStatus", {
   PENDING: 0,
   RESOLVED: 1,
   REJECTED: 2,
 });
 
-// ============================================
-// Object Types
-// ============================================
+/** App usage context for chat sessions */
+const AppUsage = objectType("AppUsage", {
+  fields: {
+    app: { type: string },
+    version: { type: string },
+    features: { type: arrayOf(string), required: false },
+    metadata: { type: string, required: false },
+  },
+});
 
-/**
- * Message part structure for rich message content
- */
+/** Message part structure for rich message content */
 const MessagePart = objectType("MessagePart", {
   fields: {
     type: { type: string },
@@ -78,9 +59,7 @@ const MessagePart = objectType("MessagePart", {
   },
 });
 
-/**
- * Message attachment structure
- */
+/** Message attachment structure */
 const MessageAttachment = objectType("MessageAttachment", {
   fields: {
     name: { type: string },
@@ -91,155 +70,27 @@ const MessageAttachment = objectType("MessageAttachment", {
   },
 });
 
-/**
- * App usage context for chat sessions
- */
-const AppUsage = objectType("AppUsage", {
-  fields: {
-    app: { type: string },
-    version: { type: string },
-    features: { type: arrayOf(string), required: false },
-    metadata: { type: string, required: false }, // JSON string for flexible metadata
-  },
-});
-
-// ============================================
-// Item Types
-// ============================================
-
-/**
- * User represents an authenticated user of the system
- */
-itemType("User", {
-  keyPath: [
-    "/user-:id",
-    "/email-:email", // Secondary key path for unique email lookup
-  ],
-  fields: {
-    id: { 
-      type: userId, 
-      initialValue: "rand53",
-    },
-    email: { 
-      type: string,
-      valid: 'this.matches("[^@]+@[^@]+")',
-    },
-    // Password is optional since some users might use OAuth
-    passwordHash: { 
-      type: string,
-      required: false,
-    },
-    createdAt: {
-      type: timestampSeconds,
-      fromMetadata: "createdAtTime",
-    },
-    lastModifiedAt: {
-      type: timestampSeconds,
-      fromMetadata: "lastModifiedAtTime",
-    },
-  },
-});
-
-/**
- * Chat represents a conversation thread
- */
+/** Chat represents a conversation thread */
 itemType("Chat", {
   keyPath: [
     "/chat-:id",
-    "/user-:userId/chat-:id", // Hierarchical path for user's chats
-    "/user-:userId/visibility-:visibility/chat-:id", // Path for filtering by visibility
+    "/user-:userId/chat-:id",
+    "/user-:userId/visibility-:visibility/chat-:id",
   ],
   fields: {
-    id: { 
-      type: chatId,
-      initialValue: "rand53",
-    },
-    title: { 
-      type: string,
-    },
-    userId: { 
-      type: userId,
-    },
-    /**
-     * Default to private
-     */
-    visibility: { 
-        type: Visibility,
-        required: false,
-    },
-    lastContext: { 
-      type: AppUsage,
-      required: false,
-    },
+    id: { type: uint, required: false, initialValue: "rand53" },
+    title: { type: string },
+    userId: { type: uint },
+    visibility: { type: Visibility, required: false },
+    lastContext: { type: AppUsage, required: false },
     createdAt: {
       type: timestampSeconds,
+      required: false,
       fromMetadata: "createdAtTime",
     },
     updatedAt: {
       type: timestampSeconds,
-      fromMetadata: "lastModifiedAtTime",
-    },
-  },
-});
-
-/**
- * Message represents a single message in a chat conversation
- */
-itemType("Message", {
-  keyPath: [
-    "/chat-:chatId/message-:id",
-    "/message-:id", // Direct access by message ID
-  ],
-  fields: {
-    id: { 
-      type: messageId,
-      initialValue: "sequence",
-    },
-    chatId: { 
-      type: chatId,
-    },
-    role: { 
-      type: MessageRole,
-    },
-    parts: { 
-      type: arrayOf(MessagePart),
-    },
-    attachments: { 
-      type: arrayOf(MessageAttachment),
       required: false,
-    },
-    createdAt: {
-      type: timestampSeconds,
-      fromMetadata: "createdAtTime",
-    },
-    createdAtVersion: {
-      type: uint,
-      fromMetadata: "createdAtVersion",
-    },
-  },
-});
-
-/**
- * Vote represents user feedback on messages
- */
-itemType("Vote", {
-  keyPath: [
-    "/vote-:chatId/message-:messageId", // Lets us 
-    "/message-:messageId/vote-:chatId", // Alternative access pattern
-    "/chat-:chatId/message-:messageId/vote", // This is stored here so we can delete votes by listing over chat id
-  ],
-  fields: {
-    chatId: { 
-      type: chatId,
-    },
-    messageId: { 
-      type: messageId,
-    },
-    isUpvoted: { 
-      type: bool,
-    },
-    votedAt: {
-      type: timestampSeconds,
       fromMetadata: "lastModifiedAtTime",
     },
   },
@@ -247,126 +98,127 @@ itemType("Vote", {
 
 /**
  * Document represents user-created content
- * Note: We use a separate createdTimestamp field instead of metadata 
+ * Note: We use a separate createdTimestamp field for versioning of one document
  * because metadata fields cannot be used in key paths
  */
 itemType("Document", {
   keyPath: [
-    "/document-:id", // Direct access by document ID
-    "/user-:userId/document-:id/created-:createdTimestamp",
-    "/user-:userId/kind-:kind/document-:id", // Access by kind
+    "/document-:id/version-:createdAt",
+    "/user-:userId/document-:id/version-:createdAt",
   ],
   fields: {
-    id: { 
-      type: documentId,
-      initialValue: "rand53",
-    },
-    userId: { 
-      type: userId,
-    },
-    title: { 
-      type: string,
-    },
-    content: { 
-      type: string,
-      required: false,
-    },
-    /**
-     * Default to TEXT
-     */
-    kind: { 
-      type: DocumentKind,
-      required: false,
-    },
-    // Separate timestamp field for use in key paths
-    createdAt: {
-      type: timestampSeconds,
-    },
+    id: { type: uint, required: false, initialValue: "rand53" },
+    userId: { type: uint },
+    title: { type: string },
+    content: { type: string, required: false },
+    kind: { type: DocumentKind, required: false },
+    createdAt: { type: timestampSeconds },
     updatedAt: {
       type: timestampSeconds,
+      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
 });
 
-/**
- * Suggestion represents feedback or suggestions on documents
- */
-itemType("Suggestion", {
-  keyPath: [
-    // TODO add createdAt index to this
-    "/document-:documentId/suggestion-:id",
-    "/user-:userId/suggestion-:id", // User's suggestions
-    "/document-:documentId/status-:resolutionStatus/suggestion-:id", // Filter by resolution status (using enum)
-  ],
+/** Message represents a single message in a chat conversation */
+itemType("Message", {
+  keyPath: "/chat-:chatId/message-:id",
   fields: {
-    id: { 
-      type: suggestionId,
-      initialValue: "rand53",
-    },
-    documentId: { 
-      type: documentId,
-    },
-    originalText: { 
-      type: string,
-    },
-    suggestedText: { 
-      type: string,
-    },
-    description: { 
-      type: string,
-      required: false,
-    },
-    /**
-     * Default to PENDING
-     */
-    resolutionStatus: { 
-      type: ResolutionStatus,
-      required: false,
-    },
-    userId: { 
-      type: userId,
-    },
+    id: { type: uint, required: false, initialValue: "sequence" },
+    chatId: { type: uint },
+    role: { type: MessageRole },
+    parts: { type: arrayOf(MessagePart) },
+    attachments: { type: arrayOf(MessageAttachment), required: false },
     createdAt: {
       type: timestampSeconds,
+      required: false,
       fromMetadata: "createdAtTime",
     },
-    resolvedAt: {
-      type: timestampSeconds,
+    createdAtVersion: {
+      type: uint,
       required: false,
+      fromMetadata: "createdAtVersion",
     },
   },
 });
 
-/**
- * Stream represents real-time streaming sessions for chats
- */
+/** Stream represents real-time streaming sessions for chats */
 itemType("Stream", {
-  keyPath: [
-    "/chat-:chatId/stream-:id",
-    "/stream-:id", // Direct access
-  ],
+  keyPath: ["/chat-:chatId/stream-:id", "/stream-:id"],
   ttl: {
     source: "fromCreated",
-    durationSeconds: 24 * 60 * 60, // Expire after 24 hours
+    durationSeconds: 86400,
   },
   fields: {
-    id: { 
-      type: streamId,
-      initialValue: "rand53",
-    },
-    chatId: { 
-      type: chatId,
-    },
-    active: {
-      type: bool,
-    },
+    id: { type: uint, required: false, initialValue: "rand53" },
+    chatId: { type: uint },
+    active: { type: bool, required: false },
     createdAt: {
       type: timestampSeconds,
+      required: false,
       fromMetadata: "createdAtTime",
     },
     lastActivity: {
       type: timestampSeconds,
+      required: false,
+      fromMetadata: "lastModifiedAtTime",
+    },
+  },
+});
+
+/** Suggestion represents feedback or suggestions on documents */
+itemType("Suggestion", {
+  keyPath: [
+    "/document-:documentId/version-:documentVersion/suggestion-:id",
+    "/user-:userId/suggestion-:id",
+  ],
+  fields: {
+    id: { type: uint, required: false, initialValue: "rand53" },
+    documentId: { type: uint },
+    documentVersion: { type: timestampSeconds },
+    originalText: { type: string },
+    suggestedText: { type: string },
+    description: { type: string, required: false },
+    resolutionStatus: { type: ResolutionStatus, required: false },
+    userId: { type: uint },
+    resolvedAt: { type: timestampSeconds, required: false },
+  },
+});
+
+/** User represents an authenticated user of the system */
+itemType("User", {
+  keyPath: ["/user-:id", "/email-:email"],
+  fields: {
+    id: { type: uint, required: false, initialValue: "rand53" },
+    email: { type: string, valid: `this.matches("[^@]+@[^@]+")` },
+    passwordHash: { type: string, required: false },
+    createdAt: {
+      type: timestampSeconds,
+      required: false,
+      fromMetadata: "createdAtTime",
+    },
+    lastModifiedAt: {
+      type: timestampSeconds,
+      required: false,
+      fromMetadata: "lastModifiedAtTime",
+    },
+  },
+});
+
+/** Vote represents user feedback on messages */
+itemType("Vote", {
+  keyPath: [
+    "/chat-:chatId/message-:messageId/vote",
+    "/message-:messageId/vote-:chatId",
+  ],
+  fields: {
+    chatId: { type: uint },
+    messageId: { type: uint },
+    isUpvoted: { type: bool, required: false },
+    votedAt: {
+      type: timestampSeconds,
+      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
