@@ -78,19 +78,17 @@ itemType("Chat", {
     "/user-:userId/visibility-:visibility/chat-:id",
   ],
   fields: {
-    id: { type: uint, required: false, initialValue: "rand53" },
+    id: { type: uint, initialValue: "rand53" },
     title: { type: string },
     userId: { type: uint },
     visibility: { type: Visibility, required: false },
     lastContext: { type: AppUsage, required: false },
     createdAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "createdAtTime",
     },
     updatedAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
@@ -107,7 +105,7 @@ itemType("Document", {
     "/user-:userId/document-:id/version-:createdAt",
   ],
   fields: {
-    id: { type: uint, required: false, initialValue: "rand53" },
+    id: { type: uint, initialValue: "rand53" },
     userId: { type: uint },
     title: { type: string },
     content: { type: string, required: false },
@@ -115,7 +113,6 @@ itemType("Document", {
     createdAt: { type: timestampSeconds },
     updatedAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
@@ -125,19 +122,17 @@ itemType("Document", {
 itemType("Message", {
   keyPath: "/chat-:chatId/message-:id",
   fields: {
-    id: { type: uint, required: false, initialValue: "sequence" },
+    id: { type: uint, initialValue: "sequence" },
     chatId: { type: uint },
     role: { type: MessageRole },
     parts: { type: arrayOf(MessagePart) },
     attachments: { type: arrayOf(MessageAttachment), required: false },
     createdAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "createdAtTime",
     },
     createdAtVersion: {
       type: uint,
-      required: false,
       fromMetadata: "createdAtVersion",
     },
   },
@@ -151,17 +146,15 @@ itemType("Stream", {
     durationSeconds: 86400,
   },
   fields: {
-    id: { type: uint, required: false, initialValue: "rand53" },
+    id: { type: uint, initialValue: "rand53" },
     chatId: { type: uint },
-    active: { type: bool, required: false },
+    active: { type: bool },
     createdAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "createdAtTime",
     },
     lastActivity: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
@@ -174,7 +167,7 @@ itemType("Suggestion", {
     "/user-:userId/suggestion-:id",
   ],
   fields: {
-    id: { type: uint, required: false, initialValue: "rand53" },
+    id: { type: uint, initialValue: "rand53" },
     documentId: { type: uint },
     documentVersion: { type: timestampSeconds },
     originalText: { type: string },
@@ -190,17 +183,15 @@ itemType("Suggestion", {
 itemType("User", {
   keyPath: ["/user-:id", "/email-:email"],
   fields: {
-    id: { type: uint, required: false, initialValue: "rand53" },
+    id: { type: uint, initialValue: "rand53" },
     email: { type: string, valid: `this.matches("[^@]+@[^@]+")` },
-    passwordHash: { type: string, required: false },
+    passwordHash: { type: string },
     createdAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "createdAtTime",
     },
     lastModifiedAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
@@ -215,10 +206,9 @@ itemType("Vote", {
   fields: {
     chatId: { type: uint },
     messageId: { type: uint },
-    isUpvoted: { type: bool, required: false },
+    isUpvoted: { type: bool },
     votedAt: {
       type: timestampSeconds,
-      required: false,
       fromMetadata: "lastModifiedAtTime",
     },
   },
