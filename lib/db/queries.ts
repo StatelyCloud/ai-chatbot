@@ -47,6 +47,7 @@ const client = createClient({
 
 // ============================================
 // Transformation Utilities
+// TODO: These are only necessary until Stately types have a built-in toJson
 // ============================================
 
 // Convert protobuf types to Zod types

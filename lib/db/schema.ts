@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// TODO: These are only necessary until Stately types have a built-in toJson
+
 // ============================================
 // Enums
 // ============================================
