@@ -82,7 +82,10 @@ export function MessageEditor({
           onClick={async () => {
             setIsSubmitting(true);
 
-            await deleteTrailingMessages({chatId, messageId: message.id});
+            await deleteTrailingMessages({
+                chatId, 
+                id: message.id
+            });
 
             setMessages((messages) => {
               const index = messages.findIndex((m) => m.id === message.id);

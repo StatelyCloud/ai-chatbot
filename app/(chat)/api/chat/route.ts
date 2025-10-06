@@ -42,9 +42,7 @@ import {
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
-import {
-  convertZodMessagesToUI,
-} from "@/lib/utils";
+import { convertZodMessagesToUI } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -140,7 +138,7 @@ export async function POST(request: Request) {
       });
 
       await saveChat({
-        id: id,
+        id,
         userId: session.user.id,
         title,
         visibility: selectedVisibilityType,
@@ -169,7 +167,7 @@ export async function POST(request: Request) {
 
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
-        const result =  streamText({
+        const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({
             selectedChatModel,
@@ -257,16 +255,18 @@ export async function POST(request: Request) {
         await saveMessages({
           messages: messages.map((currentMessage) => ({
             id: currentMessage.id,
-            chatId: id,
             role: currentMessage.role,
-            parts: currentMessage.parts.map((part) => mapUIMessagePartToZodFormat(part as UIMessagePart<CustomUIDataTypes, ChatTools>)),
-            attachments: [],
+            parts: currentMessage.parts.map((part) =>
+                mapUIMessagePartToZodFormat(
+                    part as UIMessagePart<CustomUIDataTypes, ChatTools>
+                )
+            ),
             createdAt: new Date(),
-            createdAtVersion: "1",
+            attachments: [],
+            chatId: id,
           })),
         });
 
-        // TODO: Ryan implement this
         // if (finalMergedUsage) {
         //   try {
         //     await updateChatLastContextById({
@@ -282,6 +282,16 @@ export async function POST(request: Request) {
         return "Oops, an error occurred!";
       },
     });
+
+    // const streamContext = getStreamContext();
+
+    // if (streamContext) {
+    //   return new Response(
+    //     await streamContext.resumableStream(streamId, () =>
+    //       stream.pipeThrough(new JsonToSseTransformStream())
+    //     )
+    //   );
+    // }
 
     return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
   } catch (error) {
@@ -326,7 +336,7 @@ export async function DELETE(request: Request) {
     return new ChatSDKError("forbidden:chat").toResponse();
   }
 
-  await deleteChatById({ id });
+  const deletedChat = await deleteChatById({ id });
 
-  return Response.json([1], { status: 200 });
+  return Response.json(deletedChat, { status: 200 });
 }

@@ -52,6 +52,8 @@ export const requestSuggestions = ({
         
         const userId = session.user.id;
 
+        // We save the suggestions ahead of sending them to the user to ensure
+        // we have an ID to act on if the user wants to edit or delete the suggestion.
         const [suggestion] = await saveSuggestions({
             suggestions: [{
                 originalText: element.originalSentence,

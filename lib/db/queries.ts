@@ -283,11 +283,12 @@ export async function saveChat({
   }
 }
 
-export async function deleteChatById({ id }: { id: string }): Promise<void> {
+export async function deleteChatById({ id }: { id: string }): Promise<ZodChat | undefined> {
   // Validate input
   const validatedId = z.string().parse(id);
 
   try {
+    let existingChat: ZodChat | undefined;
     await client.transaction(async (tx) => {
       const iter = tx.beginList(`/chat-${validatedId}`);
       let keysToDelete: string[] = [];
@@ -298,9 +299,13 @@ export async function deleteChatById({ id }: { id: string }): Promise<void> {
         if (client.isType(item, "Vote")) {
           keysToDelete.push(`/chat-${validatedId}/message-${item.messageId}/vote`);
         }
+        if (client.isType(item, "Chat")) {
+          existingChat = chatToZod(item);
+        }
       }
       await tx.del(...keysToDelete, `/chat-${validatedId}`);
     });
+    return existingChat;
   } catch (_error) {
     console.error("Failed to delete chat by id", _error);
     throw new ChatSDKError(
@@ -672,14 +677,14 @@ export async function getMessageById({ id }: { id: string }): Promise<ZodMessage
 
 export async function deleteMessagesByChatIdAfterTimestamp({
   chatId,
-  messageId,
+  id,
 }: {
   chatId: string;
-  messageId: string;
+  id: string;
 }): Promise<void> {
   // Validate input
   const validatedChatId = z.string().parse(chatId);
-  const validatedMessageId = z.string().parse(messageId);
+  const validatedMessageId = z.string().parse(id);
 
   try {
     // TODO add timestamp check
@@ -706,7 +711,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
   }
 }
 
-export async function updateChatVisibilityById({
+export async function updateChatVisiblityById({
   chatId,
   visibility,
 }: {

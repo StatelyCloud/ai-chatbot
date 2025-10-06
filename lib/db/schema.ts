@@ -70,7 +70,7 @@ export const ChatSchema = z.object({
   id: z.string(), // bigint converted to string for JSON safety
   title: z.string(),
   userId: z.string(), // bigint converted to string for JSON safety
-  visibility: VisibilitySchema.optional(),
+  visibility: VisibilitySchema,
   lastContext: AppUsageSchema.optional(),
   createdAt: z.date(), // timestampSeconds converted to Date
   updatedAt: z.date(), // timestampSeconds converted to Date
@@ -97,7 +97,7 @@ export const DocumentSchema = z.object({
   id: z.string(), // bigint converted to string for JSON safety
   userId: z.string(), // bigint converted to string for JSON safety
   title: z.string(),
-  content: z.string().optional(),
+  content: z.string().nullable(),
   kind: DocumentKindSchema,
   createdAt: z.date(), // timestampSeconds converted to Date
   updatedAt: z.date(), // timestampSeconds converted to Date

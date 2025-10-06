@@ -36,7 +36,7 @@ export function useChatVisibility({
     if (!chat) {
       return "private";
     }
-    return chat.visibility ?? "private";
+    return chat.visibility;
   }, [history, chatId, localVisibility]);
 
   const setVisibilityType = (updatedVisibilityType: VisibilityType) => {

@@ -6,11 +6,10 @@ import {
   getMessagesByChatId,
   getStreamIdsByChatId,
 } from "@/lib/db/queries";
+import { Chat } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { getStreamContext } from "../../route";
-import { Visibility } from "@/lib/db/generated";
-import { Chat } from "@/lib/db/schema";
 
 export async function GET(
   _: Request,
@@ -77,8 +76,8 @@ export async function GET(
    * but the resumable stream has concluded at this point.
    */
   if (!stream) {
-    const chatMessages = await getMessagesByChatId({ id: chatId });
-    const mostRecentMessage = chatMessages.messages.at(-1);
+    const { messages } = await getMessagesByChatId({ id: chatId });
+    const mostRecentMessage = messages.at(-1);
 
     if (!mostRecentMessage) {
       return new Response(emptyDataStream, { status: 200 });
@@ -88,12 +87,11 @@ export async function GET(
       return new Response(emptyDataStream, { status: 200 });
     }
 
-    const messageCreatedAt = new Date(Number(mostRecentMessage.createdAt));
+    const messageCreatedAt = mostRecentMessage.createdAt;
 
     if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
       return new Response(emptyDataStream, { status: 200 });
     }
-
 
     const restoredStream = createUIMessageStream<ChatMessage>({
       execute: ({ writer }) => {

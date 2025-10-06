@@ -39,7 +39,7 @@ const PureChatItem = ({
 }) => {
   const { visibilityType, setVisibilityType } = useChatVisibility({
     chatId: chat.id,
-    initialVisibilityType: chat.visibility ?? "private",
+    initialVisibilityType: chat.visibility,
   });
 
   return (

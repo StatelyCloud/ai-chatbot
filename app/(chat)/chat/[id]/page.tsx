@@ -28,7 +28,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       return notFound();
     }
 
-    if (session.user.id !== chat.userId.toString()) {
+    if (session.user.id !== chat.userId) {
       return notFound();
     }
   }
@@ -45,11 +45,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       <>
         <Chat
           autoResume={true}
-          id={chat.id.toString()}
+          id={chat.id}
           initialChatModel={DEFAULT_CHAT_MODEL}
           initialMessages={uiMessages}
-          initialVisibilityType={chat.visibility === "public" ? "public" : "private"}
-          isReadonly={session?.user?.id !== chat.userId.toString()}
+          initialVisibilityType={chat.visibility}
+          isReadonly={session?.user?.id !== chat.userId}
         />
         <DataStreamHandler />
       </>
@@ -60,11 +60,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     <>
       <Chat
         autoResume={true}
-        id={chat.id.toString()}
+        id={chat.id}
         initialChatModel={chatModelFromCookie.value}
         initialMessages={uiMessages}
-        initialVisibilityType={chat.visibility === "public" ? "public" : "private"}
-        isReadonly={session?.user?.id !== chat.userId.toString()}
+        initialVisibilityType={chat.visibility}
+        isReadonly={session?.user?.id !== chat.userId}
       />
       <DataStreamHandler />
     </>
