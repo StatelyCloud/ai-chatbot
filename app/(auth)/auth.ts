@@ -1,8 +1,10 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import type { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
-import { createGuestUser } from "@/lib/db/queries";
+import { createGuestUser, getUser } from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
+import { compare } from "bcrypt-ts";
+import { DUMMY_PASSWORD } from "@/lib/constants";
 
 export type UserType = "guest" | "regular";
 
@@ -38,13 +40,36 @@ export const {
   ...authConfig,
   providers: [
     Credentials({
+      credentials: {},
+      async authorize({ email, password }: any) {
+        const user = await getUser(email);
+
+        if (!user) {
+          await compare(password, DUMMY_PASSWORD);
+          return null;
+        }
+
+        if (!user.passwordHash) {
+          await compare(password, DUMMY_PASSWORD);
+          return null;
+        }
+
+        const passwordsMatch = await compare(password, user.passwordHash);
+
+        if (!passwordsMatch) {
+          return null;
+        }
+
+        return { ...user, type: "regular" };
+      },
+    }),
+    Credentials({
       id: "guest",
       name: "Guest",
       credentials: {},
       async authorize() {
-        // Always create a guest user for guest authentication
         const guestUser = await createGuestUser();
-        return { id: guestUser.id.toString(), email: guestUser.email, type: "guest" };
+        return { ...guestUser, type: "guest" };
       },
     }),
   ],
