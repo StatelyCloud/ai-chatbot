@@ -73,7 +73,7 @@ pnpm run login
 **Generate the SDK**
 
 ```bash setup Generate the SDK
-pnpm run generate -- --language typescript --schema-id $SCHEMA_ID ./lib/db/generated
+pnpm generate --language typescript --schema-id $SCHEMA_ID ./lib/db/generated
 ```
 
 **Start the Application**
