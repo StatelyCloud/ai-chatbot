@@ -56,7 +56,7 @@ export async function GET(
     return new ChatSDKError("not_found:stream").toResponse();
   }
 
-  const recentStreamId = streamIds.at(-1);
+  const recentStreamId = streamIds.at(-1)?.id.toString();
 
   if (!recentStreamId) {
     return new ChatSDKError("not_found:stream").toResponse();
@@ -87,7 +87,7 @@ export async function GET(
       return new Response(emptyDataStream, { status: 200 });
     }
 
-    const messageCreatedAt = new Date(mostRecentMessage.createdAt);
+    const messageCreatedAt = mostRecentMessage.createdAt;
 
     if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
       return new Response(emptyDataStream, { status: 200 });

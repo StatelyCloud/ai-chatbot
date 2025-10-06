@@ -6,6 +6,7 @@ import {
   smoothStream,
   stepCountIs,
   streamText,
+  type UIMessagePart,
 } from "ai";
 import { unstable_cache as cache } from "next/cache";
 import { after } from "next/server";
@@ -17,6 +18,7 @@ import type { ModelCatalog } from "tokenlens/core";
 import { fetchModels } from "tokenlens/fetch";
 import { getUsage } from "tokenlens/helpers";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import { mapUIMessagePartToZodFormat } from "@/lib/utils";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import type { ChatModel } from "@/lib/ai/models";
@@ -38,9 +40,9 @@ import {
   updateChatLastContextById,
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, ChatTools, CustomUIDataTypes } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
-import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import { convertToUIMessages } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -143,9 +145,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const messagesFromDb = await getMessagesByChatId({ id });
-    const uiMessages = [...convertToUIMessages(messagesFromDb), message];
-
     const { longitude, latitude, city, country } = geolocation(request);
 
     const requestHints: RequestHints = {
@@ -159,17 +158,17 @@ export async function POST(request: Request) {
       messages: [
         {
           chatId: id,
-          id: message.id,
           role: "user",
-          parts: message.parts,
+          parts: message.parts.map(mapUIMessagePartToZodFormat),
           attachments: [],
-          createdAt: new Date(),
         },
       ],
     });
 
-    const streamId = generateUUID();
-    await createStreamId({ streamId, chatId: id });
+    const messages = await getMessagesByChatId({ id });
+    const uiMessages = [...convertToUIMessages(messages)];
+
+    await createStreamId({ chatId: id });
 
     let finalMergedUsage: AppUsage | undefined;
 
@@ -245,44 +244,35 @@ export async function POST(request: Request) {
           })
         );
       },
-      generateId: generateUUID,
+      generateId: () => {
+        // StatelyDB assigns the id to the message, not the client. Unfortunately, we only persist the messages "onFinish" which
+        // is when a stable ID is assigned by the server, but by then the client has already sent the message and can
+        // act on it. So we need to increment the id by 1 to ensure it aligns with what the client gets sent.
+        //
+        // There's a larger change we could make that would allow us to assign the ID in the framework and then send it back to the client,
+        // but that's a larger change.
+        return (BigInt(messages.at(-1)?.id ?? "0") + 1n).toString();
+      },
       onFinish: async ({ messages }) => {
         await saveMessages({
           messages: messages.map((currentMessage) => ({
             id: currentMessage.id,
             role: currentMessage.role,
-            parts: currentMessage.parts,
+            parts: currentMessage.parts.map((part) =>
+              mapUIMessagePartToZodFormat(
+                part as UIMessagePart<CustomUIDataTypes, ChatTools>
+              )
+            ),
             createdAt: new Date(),
             attachments: [],
             chatId: id,
           })),
         });
-
-        if (finalMergedUsage) {
-          try {
-            await updateChatLastContextById({
-              chatId: id,
-              context: finalMergedUsage,
-            });
-          } catch (err) {
-            console.warn("Unable to persist last usage for chat", id, err);
-          }
-        }
       },
       onError: () => {
         return "Oops, an error occurred!";
       },
     });
-
-    // const streamContext = getStreamContext();
-
-    // if (streamContext) {
-    //   return new Response(
-    //     await streamContext.resumableStream(streamId, () =>
-    //       stream.pipeThrough(new JsonToSseTransformStream())
-    //     )
-    //   );
-    // }
 
     return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
   } catch (error) {

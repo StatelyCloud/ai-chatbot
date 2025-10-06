@@ -88,7 +88,7 @@ export function PureMessageActions({
           toast.promise(upvote, {
             loading: "Upvoting Response...",
             success: () => {
-              mutate<Vote[]>(
+              mutate<Omit<Vote, 'votedAt'>[]>(
                 `/api/vote?chatId=${chatId}`,
                 (currentVotes) => {
                   if (!currentVotes) {
@@ -137,7 +137,7 @@ export function PureMessageActions({
           toast.promise(downvote, {
             loading: "Downvoting Response...",
             success: () => {
-              mutate<Vote[]>(
+              mutate<Omit<Vote, 'votedAt'>[]>(
                 `/api/vote?chatId=${chatId}`,
                 (currentVotes) => {
                   if (!currentVotes) {

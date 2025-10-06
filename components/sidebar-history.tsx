@@ -39,6 +39,7 @@ type GroupedChats = {
 export type ChatHistory = {
   chats: Chat[];
   hasMore: boolean;
+  token: string;
 };
 
 const PAGE_SIZE = 20;
@@ -50,7 +51,7 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
 
   return chats.reduce(
     (groups, chat) => {
-      const chatDate = new Date(chat.createdAt);
+      const chatDate = chat.createdAt;
 
       if (isToday(chatDate)) {
         groups.today.push(chat);
@@ -88,13 +89,8 @@ export function getChatHistoryPaginationKey(
     return `/api/history?limit=${PAGE_SIZE}`;
   }
 
-  const firstChatFromPage = previousPageData.chats.at(-1);
-
-  if (!firstChatFromPage) {
-    return null;
-  }
-
-  return `/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
+  // Subsequent pages
+  return `/api/history?cursor=${encodeURIComponent(previousPageData.token)}`;
 }
 
 export function SidebarHistory({ user }: { user: User | undefined }) {

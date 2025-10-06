@@ -71,12 +71,10 @@ export const VersionFooter = ({
                   ? [
                       ...documents.filter((document) =>
                         isAfter(
-                          new Date(document.createdAt),
-                          new Date(
-                            getDocumentTimestampByIndex(
-                              documents,
-                              currentVersionIndex
-                            )
+                          document.createdAt,
+                          getDocumentTimestampByIndex(
+                            documents,
+                            currentVersionIndex
                           )
                         )
                       ),

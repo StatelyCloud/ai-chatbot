@@ -2,9 +2,7 @@ import { streamObject, tool, type UIMessageStreamWriter } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import { getDocumentById, saveSuggestions } from "@/lib/db/queries";
-import type { Suggestion } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { generateUUID } from "@/lib/utils";
 import { myProvider } from "../providers";
 
 type RequestSuggestionsProps = {
@@ -32,11 +30,6 @@ export const requestSuggestions = ({
         };
       }
 
-      const suggestions: Omit<
-        Suggestion,
-        "userId" | "createdAt" | "documentCreatedAt"
-      >[] = [];
-
       const { elementStream } = streamObject({
         model: myProvider.languageModel("artifact-model"),
         system:
@@ -51,15 +44,25 @@ export const requestSuggestions = ({
       });
 
       for await (const element of elementStream) {
-        // @ts-expect-error todo: fix type
-        const suggestion: Suggestion = {
-          originalText: element.originalSentence,
-          suggestedText: element.suggestedSentence,
-          description: element.description,
-          id: generateUUID(),
-          documentId,
-          isResolved: false,
-        };
+
+        if (!session.user?.id) {
+            continue;
+        }
+        
+        const userId = session.user.id;
+
+        // We save the suggestions ahead of sending them to the user to ensure
+        // we have an ID to act on if the user wants to edit or delete the suggestion.
+        const [suggestion] = await saveSuggestions({
+            suggestions: [{
+                originalText: element.originalSentence,
+                suggestedText: element.suggestedSentence,
+                description: element.description,
+                userId: userId,
+                documentVersion: document.createdAt,
+                documentId: documentId,
+            }],
+        });    
 
         dataStream.write({
           type: "data-suggestion",
@@ -67,21 +70,8 @@ export const requestSuggestions = ({
           transient: true,
         });
 
-        suggestions.push(suggestion);
       }
 
-      if (session.user?.id) {
-        const userId = session.user.id;
-
-        await saveSuggestions({
-          suggestions: suggestions.map((suggestion) => ({
-            ...suggestion,
-            userId,
-            createdAt: new Date(),
-            documentCreatedAt: document.createdAt,
-          })),
-        });
-      }
 
       return {
         id: documentId,

@@ -55,7 +55,7 @@ function PureChatHeader({
         className="order-3 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
         <Link
-          href={"https://vercel.com/templates/next.js/nextjs-ai-chatbot"}
+          href={"https://vercel.com/new/clone?repository-name=ai-chatbot&s=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot&env=STATELY_STORE_ID,STATELY_ACCESS_KEY,ANTHROPIC_API_KEY&envDescription=API%20keys%20and%20Store%20configuration.&envLink=https%3A%2F%2Fdocs.stately.cloud%2Fguides%2Fconnect%2F&skippable-integrations=1"}
           rel="noreferrer"
           target="_noblank"
         >

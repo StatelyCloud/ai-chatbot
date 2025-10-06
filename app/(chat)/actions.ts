@@ -33,13 +33,8 @@ export async function generateTitleFromUserMessage({
   return title;
 }
 
-export async function deleteTrailingMessages({ id }: { id: string }) {
-  const [message] = await getMessageById({ id });
-
-  await deleteMessagesByChatIdAfterTimestamp({
-    chatId: message.chatId,
-    timestamp: message.createdAt,
-  });
+export async function deleteTrailingMessages({ chatId, id }: { chatId: string, id: string }) {
+  await deleteMessagesByChatIdAfterTimestamp({ chatId, id });
 }
 
 export async function updateChatVisibility({
