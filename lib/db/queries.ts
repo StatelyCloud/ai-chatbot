@@ -377,7 +377,7 @@ export async function getMessagesByChatId({
   id,
 }: {
   id: string;
-}): Promise<{ messages: ZodMessage[]; hasMore: boolean }> {
+}): Promise<ZodMessage[]> {
 
   try {
     const iter = client.beginList(`/chat-${id}/message-`);
@@ -388,10 +388,7 @@ export async function getMessagesByChatId({
       }
     }
 
-    return {
-      messages: filteredMessages,
-      hasMore: iter.token!.canContinue,
-    };
+    return filteredMessages;
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",

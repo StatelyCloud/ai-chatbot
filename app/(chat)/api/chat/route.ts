@@ -165,7 +165,7 @@ export async function POST(request: Request) {
       ],
     });
 
-    const { messages } = await getMessagesByChatId({ id });
+    const messages = await getMessagesByChatId({ id });
     const uiMessages = [...convertToUIMessages(messages)];
 
     await createStreamId({ chatId: id });
