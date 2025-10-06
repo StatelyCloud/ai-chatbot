@@ -245,9 +245,12 @@ export async function POST(request: Request) {
         );
       },
       generateId: () => {
-        // Get the last message id and increment it, this is a hack because this framework insists on assigning an id to the message
-        // and sending it back to the client without any fine grained control.
-        // There should only ever be one message sent down from the tool that needs to have an id.
+        // StatelyDB assigns the id to the message, not the client. Unfortunately, we only persist the messages "onFinish" which
+        // is when a stable ID is assigned by the server, but by then the client has already sent the message and can
+        // act on it. So we need to increment the id by 1 to ensure it aligns with what the client gets sent.
+        //
+        // There's a larger change we could make that would allow us to assign the ID in the framework and then send it back to the client,
+        // but that's a larger change.
         return (BigInt(messages.at(-1)?.id ?? "0") + 1n).toString();
       },
       onFinish: async ({ messages }) => {
@@ -256,16 +259,15 @@ export async function POST(request: Request) {
             id: currentMessage.id,
             role: currentMessage.role,
             parts: currentMessage.parts.map((part) =>
-                mapUIMessagePartToZodFormat(
-                    part as UIMessagePart<CustomUIDataTypes, ChatTools>
-                )
+              mapUIMessagePartToZodFormat(
+                part as UIMessagePart<CustomUIDataTypes, ChatTools>
+              )
             ),
             createdAt: new Date(),
             attachments: [],
             chatId: id,
           })),
         });
-
       },
       onError: () => {
         return "Oops, an error occurred!";
