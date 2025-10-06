@@ -117,12 +117,12 @@ export async function POST(request: Request) {
 
     const userType: UserType = session.user.type;
 
-    const { count } = await getMessageCountByUserId({
+    const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
     });
 
-    if (count > entitlementsByUserType[userType].maxMessagesPerDay) {
+    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError("rate_limit:chat").toResponse();
     }
 
@@ -147,6 +147,13 @@ export async function POST(request: Request) {
 
     const { longitude, latitude, city, country } = geolocation(request);
 
+    const requestHints: RequestHints = {
+      longitude,
+      latitude,
+      city,
+      country,
+    };
+
     await saveMessages({
       messages: [
         {
@@ -169,15 +176,7 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({
-            selectedChatModel,
-            requestHints: {
-              longitude,
-              latitude,
-              city,
-              country,
-            },
-          }),
+          system: systemPrompt({ selectedChatModel, requestHints }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:

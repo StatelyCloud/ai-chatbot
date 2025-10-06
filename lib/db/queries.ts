@@ -363,13 +363,13 @@ export async function getChatById({
   id,
 }: {
   id: string;
-}): Promise<ZodChat | undefined> {
+}): Promise<ZodChat | null> {
   // Validate input
   const validatedId = z.string().parse(id);
 
   try {
     const chat = await client.get("Chat", `/chat-${validatedId}`);
-    return chat ? chatToZod(chat) : undefined;
+    return chat ? chatToZod(chat) : null;
   } catch (_error) {
     console.error("Failed to get chat by id", _error);
     throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
@@ -785,14 +785,14 @@ export async function getMessageCountByUserId({
 }: {
   id: string;
   differenceInHours: number;
-}): Promise<{ count: number }> {
+}): Promise<number> {
   // Validate input
   const validatedId = z.string().parse(id);
   const validatedDifferenceInHours = z.number().int().positive().parse(differenceInHours);
 
   try {
     // TODO implement stats on the chat level, this is just used for rate limiting.
-    return { count: 10 };
+    return 10;
   } catch (_error) {
     console.error("Failed to get message count by user id", _error);
     throw new ChatSDKError(

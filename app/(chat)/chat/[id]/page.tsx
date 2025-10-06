@@ -33,9 +33,9 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     }
   }
 
-  const {messages} = await getMessagesByChatId({ id });
+  const messagesFromDb = await getMessagesByChatId({ id });
 
-  const uiMessages = convertZodMessagesToUI(messages);
+  const uiMessages = convertZodMessagesToUI(messagesFromDb.messages);
 
   const cookieStore = await cookies();
   const chatModelFromCookie = cookieStore.get("chat-model");

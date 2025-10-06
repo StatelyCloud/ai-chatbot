@@ -83,8 +83,8 @@ export function MessageEditor({
             setIsSubmitting(true);
 
             await deleteTrailingMessages({
+                id: message.id,
                 chatId, 
-                id: message.id
             });
 
             setMessages((messages) => {
