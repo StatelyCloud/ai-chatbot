@@ -42,7 +42,7 @@ import {
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
-import { convertZodMessagesToUI } from "@/lib/utils";
+import { convertToUIMessages } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -166,7 +166,7 @@ export async function POST(request: Request) {
     });
 
     const { messages } = await getMessagesByChatId({ id });
-    const uiMessages = [...convertZodMessagesToUI(messages)];
+    const uiMessages = [...convertToUIMessages(messages)];
 
     await createStreamId({ chatId: id });
 
@@ -266,31 +266,11 @@ export async function POST(request: Request) {
           })),
         });
 
-        // if (finalMergedUsage) {
-        //   try {
-        //     await updateChatLastContextById({
-        //       chatId: id,
-        //       context: finalMergedUsage,
-        //     });
-        //   } catch (err) {
-        //     console.warn("Unable to persist last usage for chat", id, err);
-        //   }
-        // }
       },
       onError: () => {
         return "Oops, an error occurred!";
       },
     });
-
-    // const streamContext = getStreamContext();
-
-    // if (streamContext) {
-    //   return new Response(
-    //     await streamContext.resumableStream(streamId, () =>
-    //       stream.pipeThrough(new JsonToSseTransformStream())
-    //     )
-    //   );
-    // }
 
     return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
   } catch (error) {

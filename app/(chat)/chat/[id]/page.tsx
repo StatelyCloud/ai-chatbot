@@ -6,7 +6,7 @@ import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
-import { convertZodMessagesToUI } from "@/lib/utils";
+import { convertToUIMessages } from "@/lib/utils";
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -35,7 +35,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   const messagesFromDb = await getMessagesByChatId({ id });
 
-  const uiMessages = convertZodMessagesToUI(messagesFromDb.messages);
+  const uiMessages = convertToUIMessages(messagesFromDb.messages);
 
   const cookieStore = await cookies();
   const chatModelFromCookie = cookieStore.get("chat-model");

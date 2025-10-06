@@ -155,7 +155,7 @@ function streamToZod(stream: Stream): ZodStream {
   };
 }
 
-export function zodToMessage(zodMessage: Omit<ZodMessage, "id" | "createdAt" | "createdAtVersion">): Message {
+function zodToMessage(zodMessage: Omit<ZodMessage, "id" | "createdAt" | "createdAtVersion">): Message {
   return client.create("Message", {
     chatId: BigInt(zodMessage.chatId),
     role: zodMessage.role === "user" ? MessageRole.MessageRole_USER : 
@@ -194,11 +194,10 @@ function zodToSuggestion(zodSuggestion: Omit<ZodSuggestion, "id" | "createdAt" |
 }
 
 export async function getUser(email: string): Promise<ZodUser> {
-  // Validate input
-  const validatedEmail = z.string().email().parse(email);
+
   
   try {
-    const res = await client.get("User", `/user-${validatedEmail}`);
+    const res = await client.get("User", `/user-${email}`);
     if (!res) {
       throw new ChatSDKError("bad_request:database", "User not found");
     }
@@ -213,16 +212,11 @@ export async function getUser(email: string): Promise<ZodUser> {
 }
 
 export async function createUser(email: string, password: string): Promise<ZodUser> {
-  // Validate input
-  const validatedEmail = z.string().email().parse(email);
-  const validatedPassword = z.string().min(1).parse(password);
-  const hashedPassword = generateHashedPassword(validatedPassword);
-
   try {
     const user = await client.put(
       client.create("User", { 
-        email: validatedEmail, 
-        passwordHash: hashedPassword 
+        email: email, 
+        passwordHash: generateHashedPassword(password) 
       })
     );
     return userToZod(user);
@@ -261,19 +255,13 @@ export async function saveChat({
   title: string;
   visibility?: "private" | "public";
 }): Promise<ZodChat> {
-  // Validate input
-  const validatedId = z.string().parse(id);
-  const validatedUserId = z.string().parse(userId);
-  const validatedTitle = z.string().parse(title);
-  const validatedVisibility = visibility ? z.enum(["private", "public"]).parse(visibility) : undefined;
-
   try {
     const chat = await client.put(
       client.create("Chat", {
-        id: BigInt(validatedId),
-        userId: BigInt(validatedUserId),
-        title: validatedTitle,
-        visibility: validatedVisibility === "private" ? Visibility.Visibility_PRIVATE : Visibility.Visibility_PUBLIC,
+        id: BigInt(id),
+        userId: BigInt(userId),
+        title: title,
+        visibility: visibility === "private" ? Visibility.Visibility_PRIVATE : Visibility.Visibility_PUBLIC,
       })
     );
     return chatToZod(chat);
@@ -284,26 +272,24 @@ export async function saveChat({
 }
 
 export async function deleteChatById({ id }: { id: string }): Promise<ZodChat | undefined> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
     let existingChat: ZodChat | undefined;
     await client.transaction(async (tx) => {
-      const iter = tx.beginList(`/chat-${validatedId}`);
+      const iter = tx.beginList(`/chat-${id}`);
       let keysToDelete: string[] = [];
       for await (const item of iter) {
         if (client.isType(item, "Message")) {
-          keysToDelete.push(`/chat-${validatedId}/message-${item.id}`);
+          keysToDelete.push(`/chat-${id}/message-${item.id}`);
         }
         if (client.isType(item, "Vote")) {
-          keysToDelete.push(`/chat-${validatedId}/message-${item.messageId}/vote`);
+          keysToDelete.push(`/chat-${id}/message-${item.messageId}/vote`);
         }
         if (client.isType(item, "Chat")) {
           existingChat = chatToZod(item);
         }
       }
-      await tx.del(...keysToDelete, `/chat-${validatedId}`);
+      await tx.del(...keysToDelete, `/chat-${id}`);
     });
     return existingChat;
   } catch (_error) {
@@ -324,19 +310,15 @@ export async function getChatsByUserId({
   limit: number;
   token: string | null;
 }): Promise<{ chats: ZodChat[]; hasMore: boolean; token: string | null }> {
-  // Validate input
-  const validatedId = z.string().parse(id);
-  const validatedLimit = limit ? z.number().int().positive().parse(limit) : 0;
-  const validatedToken = token ? z.string().parse(token) : null;
 
-  const tokenData = validatedToken ? Buffer.from(validatedToken, "base64") : null;
+  const tokenData = token ? Buffer.from(token, "base64") : null;
 
   try {
     let iter;
     if (tokenData) {
         iter = client.continueList(tokenData);
     } else {
-        iter = client.beginList(`/user-${validatedId}/chat-`, { limit: validatedLimit });
+        iter = client.beginList(`/user-${id}/chat-`, { limit: limit });
     }
     let filteredChats: ZodChat[] = [];
     for await (const chat of iter) {
@@ -364,11 +346,9 @@ export async function getChatById({
 }: {
   id: string;
 }): Promise<ZodChat | null> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
-    const chat = await client.get("Chat", `/chat-${validatedId}`);
+    const chat = await client.get("Chat", `/chat-${id}`);
     return chat ? chatToZod(chat) : null;
   } catch (_error) {
     console.error("Failed to get chat by id", _error);
@@ -377,12 +357,10 @@ export async function getChatById({
 }
 
 export async function saveMessages({ messages }: { messages: Omit<ZodMessage, "id" | "createdAt" | "createdAtVersion">[] }): Promise<void> {
-  // Validate input - messages are already typed as ZodMessage[]
-  const validatedMessages = messages;
 
   try {
     await client.putBatch(
-      ...validatedMessages.map((message) => {
+      ...messages.map((message) => {
         return client.create("Message", {
           ...zodToMessage(message),
         });
@@ -399,11 +377,9 @@ export async function getMessagesByChatId({
 }: {
   id: string;
 }): Promise<{ messages: ZodMessage[]; hasMore: boolean }> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
-    const iter = client.beginList(`/chat-${validatedId}/message-`);
+    const iter = client.beginList(`/chat-${id}/message-`);
     let filteredMessages: ZodMessage[] = [];
     for await (const message of iter) {
       if (client.isType(message, "Message")) {
@@ -433,15 +409,13 @@ export async function voteMessage({
   type: "up" | "down";
 }): Promise<ZodVote> {
   // Validate input
-  const validatedChatId = z.string().parse(chatId);
-  const validatedMessageId = z.string().parse(messageId);
   const validatedType = z.enum(["up", "down"]).parse(type);
 
   try {
     const vote = await client.put(
       client.create("Vote", {
-        chatId: BigInt(validatedChatId),
-        messageId: BigInt(validatedMessageId),
+        chatId: BigInt(chatId),
+        messageId: BigInt(messageId),
         isUpvoted: validatedType === "up",
       })
     );
@@ -457,11 +431,9 @@ export async function getVotesByChatId({
 }: {
   id: string;
 }): Promise<ZodVote[]> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
-    const iter = client.beginList(`/chat-${validatedId}`);
+    const iter = client.beginList(`/chat-${id}`);
     let votes: ZodVote[] = [];
     for await (const vote of iter) {
       if (client.isType(vote, "Vote")) {
@@ -492,25 +464,19 @@ export async function saveDocument({
   content: string;
   userId: string;
 }): Promise<ZodDocument> {
-  // Validate input
-  const validatedId = z.string().parse(id);
-  const validatedTitle = z.string().parse(title);
-  const validatedKind = z.enum(["text", "code", "image", "sheet"]).parse(kind);
-  const validatedContent = z.string().parse(content);
-  const validatedUserId = z.string().parse(userId);
 
   try {
     const document = await client.put(
         client.create("Document", {
-          id: BigInt(validatedId),
-          title: validatedTitle,
-          kind: validatedKind === "text" ? DocumentKind.DocumentKind_TEXT :
-                validatedKind === "code" ? DocumentKind.DocumentKind_CODE :
-                validatedKind === "image" ? DocumentKind.DocumentKind_IMAGE :
-                validatedKind === "sheet" ? DocumentKind.DocumentKind_SHEET :
+          id: BigInt(id),
+          title: title,
+          kind: kind === "text" ? DocumentKind.DocumentKind_TEXT :
+                kind === "code" ? DocumentKind.DocumentKind_CODE :
+                kind === "image" ? DocumentKind.DocumentKind_IMAGE :
+                kind === "sheet" ? DocumentKind.DocumentKind_SHEET :
                 DocumentKind.DocumentKind_TEXT,
-          content: validatedContent,
-          userId: BigInt(validatedUserId),
+          content: content,
+          userId: BigInt(userId),
           createdAt: getUnixTimestamp(),
         })
     );
@@ -522,11 +488,9 @@ export async function saveDocument({
 }
 
 export async function getDocumentsById({ id }: { id: string }): Promise<ZodDocument[]> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
-    const iter = client.beginList(`/document-${validatedId}/version-`);
+    const iter = client.beginList(`/document-${id}/version-`);
     let documents: ZodDocument[] = [];
     for await (const document of iter) {
       if (client.isType(document, "Document")) {
@@ -549,11 +513,9 @@ export async function getDocumentById({
 }: {
   id: string;
 }): Promise<ZodDocument | undefined> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
-    const iter = client.beginList(`/document-${validatedId}/version-`, {sortDirection: SortDirection.SORT_DESCENDING, limit: 1});
+    const iter = client.beginList(`/document-${id}/version-`, {sortDirection: SortDirection.SORT_DESCENDING, limit: 1});
     let documents: ZodDocument[] = [];
     for await (const document of iter) {
       if (client.isType(document, "Document")) {
@@ -577,15 +539,12 @@ export async function deleteDocumentsByIdAfterTimestamp({
   id: string;
   timestamp: Date;
 }): Promise<number> {
-  // Validate input
-  const validatedId = z.string().parse(id);
-  const validatedTimestamp = z.date().parse(timestamp);
 
   try {
     // TODO delete suggestions too
     const resp = await client.transaction(async (tx) => {
-      const kp = `/document-${validatedId}/version-`;
-      const iter = tx.beginList(kp, {gt: kp + (validatedTimestamp.getTime() / 1000)});
+      const kp = `/document-${id}/version-`;
+      const iter = tx.beginList(kp, {gt: kp + (timestamp.getTime() / 1000)});
       for await (const item of iter) {
         if (client.isType(item, "Document")) {
           await tx.del(kp + item.createdAt);
@@ -610,12 +569,10 @@ export async function saveSuggestions({
 }: {
   suggestions: Omit<ZodSuggestion, "id" | "createdAt" | "documentCreatedAt">[];
 }): Promise<ZodSuggestion[]> {
-  // Validate input
-  const validatedSuggestions = suggestions;
 
   try {
-    const suggestions = await client.putBatch(
-      ...validatedSuggestions.map((suggestion) => {
+    const items = await client.putBatch(
+      ...suggestions.map((suggestion) => {
         const protobufSuggestion = zodToSuggestion(suggestion);
         return client.create("Suggestion", {
           ...protobufSuggestion,
@@ -623,7 +580,7 @@ export async function saveSuggestions({
         });
       })
     );
-    return suggestions.map((suggestion) => suggestionToZod(suggestion));
+    return items.map((suggestion) => suggestionToZod(suggestion));
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -637,11 +594,9 @@ export async function getSuggestionsByDocumentId({
 }: {
   documentId: string;
 }): Promise<ZodSuggestion[]> {
-  // Validate input
-  const validatedDocumentId = z.string().parse(documentId);
 
   try {
-    const iter = client.beginList(`/document-${validatedDocumentId}/version-`);
+    const iter = client.beginList(`/document-${documentId}/version-`);
     let suggestions: ZodSuggestion[] = [];
     for await (const suggestion of iter) {
       if (client.isType(suggestion, "Suggestion")) {
@@ -658,11 +613,9 @@ export async function getSuggestionsByDocumentId({
 }
 
 export async function getMessageById({ id }: { id: string }): Promise<ZodMessage> {
-  // Validate input
-  const validatedId = z.string().parse(id);
 
   try {
-    const res = await client.get("Message", `/message-${validatedId}`);
+    const res = await client.get("Message", `/message-${id}`);
     if (!res) {
       throw new ChatSDKError("bad_request:database", "Message not found");
     }
@@ -682,22 +635,19 @@ export async function deleteMessagesByChatIdAfterTimestamp({
   chatId: string;
   id: string;
 }): Promise<void> {
-  // Validate input
-  const validatedChatId = z.string().parse(chatId);
-  const validatedMessageId = z.string().parse(id);
 
   try {
     // TODO add timestamp check
     await client.transaction(async (tx) => {
-        const kp =`/chat-${validatedChatId}/message-`;
-      const iter = tx.beginList(kp, {gte: kp + validatedMessageId});
+        const kp =`/chat-${chatId}/message-`;
+      const iter = tx.beginList(kp, {gte: kp + id});
       let keysToDelete: string[] = [];
       for await (const item of iter) {
         if (client.isType(item, "Message")) {
-            keysToDelete.push(`/chat-${validatedChatId}/message-${item.id}`);
+            keysToDelete.push(`/chat-${chatId}/message-${item.id}`);
         }
         if (client.isType(item, "Vote")) {
-            keysToDelete.push(`/chat-${validatedChatId}/message-${item.messageId}/vote`);
+            keysToDelete.push(`/chat-${chatId}/message-${item.messageId}/vote`);
         }
       }
       await tx.del(...keysToDelete);
@@ -718,18 +668,15 @@ export async function updateChatVisiblityById({
   chatId: string;
   visibility: "private" | "public";
 }): Promise<ZodChat> {
-  // Validate input
-  const validatedChatId = z.string().parse(chatId);
-  const validatedVisibility = z.enum(["private", "public"]).parse(visibility);
 
   try {
     const res = await client.transaction(async (tx) => {
-      const chat = await tx.get("Chat", `/chat-${validatedChatId}`);
+      const chat = await tx.get("Chat", `/chat-${chatId}`);
       if (!chat) {
         throw new ChatSDKError("bad_request:database", "Chat not found");
       }
       chat.visibility =
-        validatedVisibility === "private"
+        visibility === "private"
           ? Visibility.Visibility_PRIVATE
           : Visibility.Visibility_PUBLIC;
       await tx.put(chat);
@@ -751,21 +698,18 @@ export async function updateChatLastContextById({
   chatId: string;
   context: ZodAppUsage;
 }): Promise<ZodChat> {
-  // Validate input
-  const validatedChatId = z.string().parse(chatId);
-  const validatedContext = context;
 
   try {
     const res = await client.transaction(async (tx) => {
-      const chat = await tx.get("Chat", `/chat-${validatedChatId}`);
+      const chat = await tx.get("Chat", `/chat-${chatId}`);
       if (!chat) {
         throw new ChatSDKError("bad_request:database", "Chat not found");
       }
       chat.lastContext = client.create("AppUsage", {
-        app: validatedContext.app,
-        version: validatedContext.version,
-        features: validatedContext.features,
-        metadata: validatedContext.metadata,
+        app: context.app,
+        version: context.version,
+        features: context.features,
+        metadata: context.metadata,
       });
       await tx.put(chat);
     });
@@ -786,9 +730,6 @@ export async function getMessageCountByUserId({
   id: string;
   differenceInHours: number;
 }): Promise<number> {
-  // Validate input
-  const validatedId = z.string().parse(id);
-  const validatedDifferenceInHours = z.number().int().positive().parse(differenceInHours);
 
   try {
     // TODO implement stats on the chat level, this is just used for rate limiting.
@@ -807,13 +748,11 @@ export async function createStreamId({
 }: {
   chatId: string;
 }): Promise<void> {
-  // Validate input
-  const validatedChatId = z.string().parse(chatId);
 
   try {
     await client.put(
       client.create("Stream", {
-        chatId: BigInt(validatedChatId),
+        chatId: BigInt(chatId),
       })
     );
   } catch (_error) {
@@ -830,11 +769,9 @@ export async function getStreamIdsByChatId({
 }: {
   chatId: string;
 }): Promise<ZodStream[]> {
-  // Validate input
-  const validatedChatId = z.string().parse(chatId);
 
   try {
-    const iter = client.beginList(`/chat-${validatedChatId}/stream-`);
+    const iter = client.beginList(`/chat-${chatId}/stream-`);
     let streams: ZodStream[] = [];
     for await (const stream of iter) {
       if (client.isType(stream, "Stream")) {

@@ -51,13 +51,15 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
 
   return chats.reduce(
     (groups, chat) => {
-      if (isToday(chat.createdAt)) {
+      const chatDate = chat.createdAt;
+      
+      if (isToday(chatDate)) {
         groups.today.push(chat);
-      } else if (isYesterday(chat.createdAt)) {
+      } else if (isYesterday(chatDate)) {
         groups.yesterday.push(chat);
-      } else if (chat.createdAt > oneWeekAgo) {
+      } else if (chatDate > oneWeekAgo) {
         groups.lastWeek.push(chat);
-      } else if (chat.createdAt > oneMonthAgo) {
+      } else if (chatDate > oneMonthAgo) {
         groups.lastMonth.push(chat);
       } else {
         groups.older.push(chat);
@@ -79,12 +81,11 @@ export function getChatHistoryPaginationKey(
   pageIndex: number,
   previousPageData: ChatHistory
 ) {
-  
   if (previousPageData && previousPageData.token === null) {
     // No more chats to load
     return null;
   }
-  
+
   // First page
   if (pageIndex === 0) {
     return `/api/history?limit=${PAGE_SIZE}`;

@@ -64,16 +64,12 @@ export function generateUUID(): string {
 }
 
 /**
- * Generates a JSON-safe random number that won't lose precision during serialization.
+ * Generates a JSON-safe random integer that won't be truncated due to floating-point limitations.
  * Returns a random integer between 0 and 2^53 - 1 (JavaScript's MAX_SAFE_INTEGER).
- * This ensures the number remains a number (not string) when serialized to JSON.
  */
-export function generateJSONSafeRandomNumber(): string {
-  // JavaScript's MAX_SAFE_INTEGER is 2^53 - 1 = 9007199254740991
-  const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
-  
-  // Generate a random number between 0 and MAX_SAFE_INTEGER
-  return Math.floor(Math.random() * (MAX_SAFE_INTEGER + 1)).toString();
+export function generateJSONSafeRandomInteger(): string {
+    // Generate a random number between 0 and MAX_SAFE_INTEGER
+  return Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER + 1)).toString();
 }
 
 /**
@@ -218,7 +214,7 @@ function mapZodMessagePartToUIMessagePart(
   throw new Error(`Unknown message part type: ${messagePart.type}`);
 }
 
-export function convertZodMessagesToUI(messages: Message[]): ChatMessage[] {
+export function convertToUIMessages(messages: Message[]): ChatMessage[] {
   return messages.map((message) => ({
     id: message.id,
     role: message.role,

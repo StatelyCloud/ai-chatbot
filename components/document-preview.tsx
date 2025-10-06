@@ -72,7 +72,7 @@ export function DocumentPreview({
     if (args) {
       return (
         <DocumentToolCall
-          args={{ title: args.title, kind: args.kind as ArtifactKind }}
+          args={{ title: args.title, kind: args.kind }}
           isReadonly={isReadonly}
           type="create"
         />

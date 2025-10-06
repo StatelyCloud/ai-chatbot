@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import { generateJSONSafeRandomNumber } from "@/lib/utils";
+import { generateJSONSafeRandomInteger } from "@/lib/utils";
 import { auth } from "../(auth)/auth";
 
 export default async function Page() {
@@ -13,7 +13,7 @@ export default async function Page() {
     redirect("/api/auth/guest");
   }
 
-  const id = generateJSONSafeRandomNumber();
+  const id = generateJSONSafeRandomInteger();
 
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get("chat-model");
