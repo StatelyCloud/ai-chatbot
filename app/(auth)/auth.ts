@@ -65,7 +65,6 @@ export const {
     }),
     Credentials({
       id: "guest",
-      name: "Guest",
       credentials: {},
       async authorize() {
         const guestUser = await createGuestUser();

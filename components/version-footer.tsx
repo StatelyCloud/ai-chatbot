@@ -58,9 +58,7 @@ export const VersionFooter = ({
             mutate(
               `/api/document?id=${artifact.documentId}`,
               await fetch(
-                `/api/document?id=${
-                  artifact.documentId
-                }&timestamp=${getDocumentTimestampByIndex(
+                `/api/document?id=${artifact.documentId}&timestamp=${getDocumentTimestampByIndex(
                   documents,
                   currentVersionIndex
                 )}`,

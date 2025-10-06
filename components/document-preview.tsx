@@ -99,7 +99,7 @@ export function DocumentPreview({
       : null;
 
   if (!document) {
-    return <LoadingSkeleton artifactKind={artifact.kind as ArtifactKind} />;
+    return <LoadingSkeleton artifactKind={artifact.kind} />;
   }
 
   return (

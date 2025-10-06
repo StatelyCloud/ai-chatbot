@@ -52,7 +52,7 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
   return chats.reduce(
     (groups, chat) => {
       const chatDate = chat.createdAt;
-      
+
       if (isToday(chatDate)) {
         groups.today.push(chat);
       } else if (isYesterday(chatDate)) {
@@ -81,12 +81,10 @@ export function getChatHistoryPaginationKey(
   pageIndex: number,
   previousPageData: ChatHistory
 ) {
-  if (previousPageData && previousPageData.token === null) {
-    // No more chats to load
+  if (previousPageData && previousPageData.hasMore === false) {
     return null;
   }
 
-  // First page
   if (pageIndex === 0) {
     return `/api/history?limit=${PAGE_SIZE}`;
   }
