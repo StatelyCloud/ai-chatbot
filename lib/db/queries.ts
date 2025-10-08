@@ -42,6 +42,7 @@ import type {
 // biome-ignore lint: Forbidden non-null assertion.
 const client = createClient({
   storeId: Number(process.env.STATELY_STORE_ID),
+  region: process.env.STATELY_REGION,
   transport: nodeTransport,
 });
 
