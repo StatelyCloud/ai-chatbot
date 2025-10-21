@@ -78,7 +78,9 @@ pnpm generate --language typescript --schema-id $SCHEMA_ID ./lib/db/generated
 
 **Start the Application**
 
+>AUTH_SECRET is randomly generated for testing but in production you should use a secure secret to seed your application.
 ```bash setup Run the Application
+AUTH_SECRET=$(openssl rand -base64 32) \
 pnpm dev
 ```
 
