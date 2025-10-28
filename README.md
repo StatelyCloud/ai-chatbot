@@ -52,7 +52,7 @@ You can deploy your own version of the Next.js + StatelyDB AI Chatbot to Vercel 
 
 First bootstrap with StatelyDB and then Deploy onto Vercel.
 
-[![Build with Stately](https://gist.githubusercontent.com/ryan-stately/51a07a4b3123f5cb89c8b9a1f3edf214/raw/158cb441aa65d05dd1a75b85dffad2feeb473f6b/build-icon.svg)](https://console.stately.cloud/new?repo=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot)&nbsp;&nbsp;&nbsp;&nbsp;[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=ai-chatbot&s=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot&env=STATELY_STORE_ID,STATELY_ACCESS_KEY,ANTHROPIC_API_KEY&envDescription=API%20keys%20and%20Store%20configuration.&envLink=https%3A%2F%2Fdocs.stately.cloud%2Fguides%2Fconnect%2F&skippable-integrations=1)
+[![Build with Stately](https://console.stately.cloud/button.svg)](https://console.stately.cloud/new?repo=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot)&nbsp;&nbsp;&nbsp;&nbsp;[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=ai-chatbot&s=https%3A%2F%2Fgithub.com%2FStatelyCloud%2Fai-chatbot&env=STATELY_STORE_ID,STATELY_ACCESS_KEY,ANTHROPIC_API_KEY&envDescription=API%20keys%20and%20Store%20configuration.&envLink=https%3A%2F%2Fdocs.stately.cloud%2Fguides%2Fconnect%2F&skippable-integrations=1)
 
 ## Running locally
 
